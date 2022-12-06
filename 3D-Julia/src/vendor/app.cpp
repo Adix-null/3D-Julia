@@ -16,7 +16,7 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
-#include "functions.h"
+#include "../../../x64/Release/functions.h"
 
 constexpr int SCREEN_WIDTH = 700;
 constexpr int SCREEN_HEIGHT = 700;
@@ -41,66 +41,73 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-static std::vector<std::string> ParseShader(const std::string& file)
+static std::vector<std::string> ParseShader(const std::string& shader, const std::string& header)
 {
-    std::ifstream stream(file);
+    std::ifstream stream(shader);
 
     std::vector<std::string> rez;
     std::string line, linehdr, v, f, exf;
     int mode = 0, rd = 0;
 
-    while (getline(stream, line))
+    if (stream.is_open())
     {
-        if (line == "#shader vertex")
+        while (getline(stream, line))
         {
-            mode = 1;
-        }
-        else if (line == "#shader fragment")
-        {
-            mode = 2;
-        }
-        else if (line == "//injection")
-        {
-            std::ifstream hdr("src/vendor/functions.h");
+            if (line == "#shader vertex")
+            {
+                mode = 1;
+            }
+            else if (line == "#shader fragment")
+            {
+                mode = 2;
+            }
+            else if (line == "//injection")
+            {
+                std::ifstream hdr(header);
 
-            while (getline(hdr, linehdr))
-            {
-                if (linehdr == "//function inj")
+                if (hdr.is_open())
                 {
-                    rd = 1;
+                    while (getline(hdr, linehdr))
+                    {
+                        if (linehdr == "//function inj")
+                        {
+                            rd = 1;
+                        }
+                        if (rd == 1)
+                        {
+                            if (linehdr.find("inline") != std::string::npos)
+                            {
+                                exf.append(linehdr.substr(7) + "\n");
+                            }
+                            else if (linehdr.find("static") != std::string::npos)
+                            {
+                                exf.append(linehdr.substr(6) + "\n");
+                            }
+                            else
+                            {
+                                exf.append(linehdr + "\n");
+                            }
+                        }
+                    }
                 }
-                if (rd == 1)
+                hdr.close();
+                f.append(exf);
+            }
+            else
+            {
+                line.append("\n");
+                if (mode == 1)
                 {
-                    if (linehdr.find("inline") != std::string::npos)
-                    {
-                        exf.append(linehdr.substr(7) + "\n");
-                    }
-                    else if (linehdr.find("static") != std::string::npos)
-                    {
-                        exf.append(linehdr.substr(6) + "\n");
-                    }
-                    else
-                    {
-                        exf.append(linehdr + "\n");
-                    }
+                    v.append(line);
                 }
-            }
-            hdr.close();
-            f.append(exf);
-        }
-        else
-        {
-            line.append("\n");
-            if (mode == 1)
-            {
-                v.append(line);
-            }
-            else if (mode == 2)
-            {
-                f.append(line);
+                else if (mode == 2)
+                {
+                    f.append(line);
+                }
             }
         }
     }
+  
     rez.push_back(v);
     rez.push_back(f);
 
@@ -125,7 +132,7 @@ static unsigned int CompileShader(unsigned int type, const std::string& source)
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
         char* message = (char*)_malloca(length * sizeof(char));
         glGetShaderInfoLog(id, length, &length, message);
-        std::cout << "Failed to compile smth \n";
+        std::cout << "Compilation error\n";
         std::cout << message << "\n";
         glDeleteShader(id);
         return 0;
@@ -157,7 +164,7 @@ glm::vec3 camRot = glm::vec3(0, 0, 0);
 
 float mouseSens = 1.0f;
 int fov = 90;
-glm::vec4 vr = glm::vec4(0, 0, 0, 0);
+glm::vec4 vr = glm::vec4(0, 0, 1, 0);
 float speed = 1.0f;
 bool rs = true;
 int steps = 200;
@@ -189,7 +196,7 @@ float smoothMin(float a, float b, float k)
     return b + (a - b) * h - k * h * (1.0 - h);
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
@@ -198,6 +205,7 @@ int main(void)
     GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "3D Julia", NULL, NULL);
     if(!window)
     {
+        std::cout << "!window";
         glfwTerminate();
         return -1;
     }
@@ -226,7 +234,12 @@ int main(void)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
     glEnableVertexAttribArray(0);
 
-    std::vector<std::string> ParsedShader = ParseShader("res/shaders/frac.shader");
+	std::vector<std::string> ParsedShader;
+
+	if(argc > 2)
+		ParsedShader = ParseShader(argv[1], argv[2]);
+	else
+        ParsedShader = ParseShader("../x64/Release/frac.shader", "../x64/Release/functions.h");
 
     unsigned int shd = CreateShader(ParsedShader[0], ParsedShader[1]);
        
@@ -251,16 +264,6 @@ int main(void)
     HWND wind_h;
     RECT rect;
     float tmpd, dsp;
-
-    std::string inf, ln;
-    std::ifstream info("src/vendor/info.txt");
-    if (info.is_open())
-    {
-        while (std::getline(info, ln))
-        {
-            inf += ln + "\n";
-        }
-    }
 
     while(!glfwWindowShouldClose(window))
     {
@@ -382,12 +385,26 @@ int main(void)
 
         if (ImGui::Button("Info", ImVec2(100, 30)))
         {
-            const char* infI = inf.c_str();
-            size_t strli = strlen(infI);
+            const char* infotext = R"(Controls:
+
+            Movement:
+            	w - forwards
+            	a - left
+            	s - backwards
+            	d - right
+            	q - up
+            	e - down
+            
+            Rotation:
+            	v - enable focus mode in window
+            	Use mouse to look around)";
+
+            size_t strli = strlen(infotext);
             wchar_t* infO = new wchar_t[strli + 1];
-            mbstowcs_s(NULL, infO, strli + 1, infI, strli);
+            mbstowcs_s(NULL, infO, strli + 1, infotext, strli);
             MessageBoxW(glfwGetWin32Window(window), (LPCWSTR)(infO), (LPCWSTR)L"Controls", MB_OK | MB_ICONINFORMATION);
         }
+
         ImGui::End();
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
