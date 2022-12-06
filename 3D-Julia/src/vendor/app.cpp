@@ -394,6 +394,7 @@ int main(int argc, char *argv[])
             	d - right
             	q - up
             	e - down
+                Scroolwheel - change speed
             
             Rotation:
             	v - enable focus mode in window
