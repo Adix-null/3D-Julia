@@ -311,11 +311,11 @@ inline float distance(vec3 pos)
 	vec3 inf = infinite(pos, 2);
 	
 	//return min(distBox(pos, vec3(1), vec3(0)), distPlane(pos));
-	//return min(distBoxFrame(pos, vec3(1), 0.075), distPlane(pos));
+	return min(distBoxFrame(pos, vec3(1), 0.075), distPlane(pos));
 
 	//return min(distMandelbulb(pos), distPlane(pos));
 	//return distMenger(pos);
 	//return distMandelbox(pos);
 	//return intersect(distJulia(pos, var), distBox(pos, vec3(100, 100, 0.5), vec3(0.5)));
-	return distJulia(pos, var);
+	//return distJulia(pos, var);
 }

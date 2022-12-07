@@ -105,7 +105,9 @@ vec3 compute(vec2 aaCoord)
 {
 	float d = pow(10, -eps);
 
-	vec3 rd = rotate(camRot, normalize(vec3(sin((pos.x + aaCoord.x) * 0.5 * fov), 1, sin((pos.y + aaCoord.y) * 0.5 * fov * aspect.y / aspect.x))));
+	vec3 rd = rotate(camRot, normalize(vec3(
+		sin((pos.x + aaCoord.x) * 0.5 * fov), 1,
+		sin((pos.y + aaCoord.y) * 0.5 * fov * aspect.y / aspect.x))));
 	vec4 dp = march(camPos, normalize(rd));
 
 	if (dp.w != 0)

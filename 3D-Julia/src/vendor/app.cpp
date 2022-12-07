@@ -18,8 +18,8 @@
 
 #include "../../../x64/Release/functions.h"
 
-constexpr int SCREEN_WIDTH = 700;
-constexpr int SCREEN_HEIGHT = 700;
+int SCREEN_WIDTH = 1500;
+int SCREEN_HEIGHT = 700;
 constexpr float PI = 3.14159265358979f;
 constexpr float E = 2.718281828f;
 
@@ -229,6 +229,7 @@ int main(int argc, char *argv[])
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
+    
     glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
@@ -259,7 +260,8 @@ int main(int argc, char *argv[])
 
     POINT f, m{ 0,0 };
 
-    glfwSetWindowSize(window, SCREEN_WIDTH + 600, SCREEN_HEIGHT);
+    int imguiSize = 500;
+    glfwSetWindowSize(window, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     HWND wind_h;
     RECT rect;
@@ -267,26 +269,40 @@ int main(int argc, char *argv[])
 
     while(!glfwWindowShouldClose(window))
     {
-        glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        wind_h = glfwGetWin32Window(window);
+        GetWindowRect(wind_h, &rect);
+
+        SCREEN_WIDTH = rect.right - rect.left - imguiSize;
+        SCREEN_HEIGHT = rect.bottom - rect.top;
+
         glScissor(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        
+        if (SCREEN_WIDTH / (SCREEN_HEIGHT * 1.0f) < 0.5f)
+        {
+            SCREEN_WIDTH = SCREEN_HEIGHT * 0.5f;
+            glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            glfwSetWindowSize(window, SCREEN_WIDTH + imguiSize, SCREEN_HEIGHT - 50);
+        }
+        else
+        {
+            glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        }
+
+
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        
-        wind_h = glfwGetWin32Window(window);
-
-        GetWindowRect(wind_h, &rect);
+        ImGui::NewFrame();        
 
         ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH, 0));
-        ImGui::SetNextWindowSize(ImVec2(rect.right - rect.left - SCREEN_WIDTH, rect.bottom - rect.top));
+        ImGui::SetNextWindowSize(ImVec2(imguiSize, SCREEN_HEIGHT));
 
         glUseProgram(shd);
 
         GetCursorPos(&f);
-        ScreenToClient(glfwGetWin32Window(window), &f);
+        ScreenToClient(wind_h, &f);
         m.x = (LONG)(SCREEN_WIDTH * 0.5);
         m.y = (LONG)(SCREEN_HEIGHT * 0.5);
 
@@ -296,7 +312,7 @@ int main(int argc, char *argv[])
             {
                 camRotDif.x = mouseSens * 0.05f * ImGui::GetIO().DeltaTime * ((float)(f.y) - (SCREEN_HEIGHT * 0.5f));
                 camRotDif.z = mouseSens * 0.05f * ImGui::GetIO().DeltaTime * ((float)(f.x) - (SCREEN_WIDTH * 0.5f));
-                ClientToScreen(glfwGetWin32Window(window), &m);
+                ClientToScreen(wind_h, &m);
                 SetCursorPos(m.x, m.y);
             }
             toggleCursor(false);
@@ -366,7 +382,7 @@ int main(int argc, char *argv[])
         ImGui::Text("Viewing");
         ImGui::Checkbox("Relative speed", &rs);
         ImGui::SliderInt("Field Of View", &fov, 30, 150);
-        ImGui::SliderFloat("Mouse Sensitivity", &mouseSens, 0.1f, 5.0f);
+        ImGui::SliderFloat("Mouse Sensitivity", &mouseSens, 0.1f, 2.0f);
         ImGui::SliderInt("Anti aliasing", &msaa, 1, 3);
         
         ImGui::Text("Inputs");
@@ -378,6 +394,7 @@ int main(int argc, char *argv[])
         ImGui::SliderFloat("Z", &vr.z, -varLimit, varLimit);
         ImGui::SliderFloat("W", &vr.w, -varLimit, varLimit);
 
+        ImGui::Text("Debug: Aspect: %.2f", SCREEN_WIDTH / (SCREEN_HEIGHT * 1.0f));
         ImGui::Text("Distance: %.2f", distance(camPos));
         ImGui::Text("Speed: %.1f", speed);
         ImGui::Text("Pos: X: %.1f, Y: %.1f, Z: %.1f", camPos.x, camPos.y, camPos.z);
@@ -385,25 +402,27 @@ int main(int argc, char *argv[])
 
         if (ImGui::Button("Info", ImVec2(100, 30)))
         {
-            const char* infotext = R"(Controls:
+            const char* infotext = R"(
+Controls:
 
-            Movement:
-            	w - forwards
-            	a - left
-            	s - backwards
-            	d - right
-            	q - up
-            	e - down
-                Scroolwheel - change speed
+Movement:
+    w - forwards
+    a - left
+    s - backwards
+    d - right
+    q - up
+    e - down
+    Scroolwheel - change speed
             
-            Rotation:
-            	v - enable focus mode in window
-            	Use mouse to look around)";
+Rotation:
+    v - enable focus mode in window
+    Use mouse to look around
+)";
 
             size_t strli = strlen(infotext);
             wchar_t* infO = new wchar_t[strli + 1];
             mbstowcs_s(NULL, infO, strli + 1, infotext, strli);
-            MessageBoxW(glfwGetWin32Window(window), (LPCWSTR)(infO), (LPCWSTR)L"Controls", MB_OK | MB_ICONINFORMATION);
+            MessageBoxW(wind_h, (LPCWSTR)(infO), (LPCWSTR)L"Controls", MB_OK | MB_ICONINFORMATION);
         }
 
         ImGui::End();
