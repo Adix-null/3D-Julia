@@ -202,35 +202,6 @@ inline float distMenger(vec3 pos)
 	return d;
 }
 
-//float distCross(vec3 pos)
-//{
-//	float v = 2;
-//	v = 1 / v;
-//
-//	float mc, cubes, d; 
-//	float cbsum = 100;
-//	mc = distBox(pos, vec3(1), vec3(0));
-//	float s = 1;
-//	float rd = s * (1 + v);
-//
-//	cubes = unite(unite(
-//			distBox(pos, vec3(v), vec3(0, 0, rd)),
-//			distBox(pos, vec3(v), vec3(0, rd, 0))),
-//			distBox(pos, vec3(v), vec3(rd, 0, 0)));
-//
-//	for (int i = 1; i < 3; i++)
-//	{
-//		s /= 3;
-//		rd = s * (1 + v);
-//		
-//		//cbsum = unite(cbsum, cubes);
-//		//cbsum = unite(cbsum, mc);
-//		cbsum = 
-//	}
-//
-//	return unite(mc, cubes);
-//}
-
 inline vec3 boxFold(vec3 pos, vec3 r)
 {
 	return clamp(pos, -r, r) * vec3(2.0) - pos;
@@ -311,9 +282,9 @@ inline float distance(vec3 pos)
 	vec3 inf = infinite(pos, 2);
 	
 	//return min(distBox(pos, vec3(1), vec3(0)), distPlane(pos));
-	return min(distBoxFrame(pos, vec3(1), 0.075), distPlane(pos));
+	//return min(distBoxFrame(pos, vec3(1), 0.075), distPlane(pos));
 
-	//return min(distMandelbulb(pos), distPlane(pos));
+	return distMandelbulb(pos);
 	//return distMenger(pos);
 	//return distMandelbox(pos);
 	//return intersect(distJulia(pos, var), distBox(pos, vec3(100, 100, 0.5), vec3(0.5)));

@@ -12,13 +12,17 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
+#include <GL/GL.h>
+#include <FreeImage.h>
+#include <map> 
+
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
 #include "../../../x64/Release/functions.h"
 
-int SCREEN_WIDTH = 1500;
+int SCREEN_WIDTH = 1200;
 int SCREEN_HEIGHT = 700;
 constexpr float PI = 3.14159265358979f;
 constexpr float E = 2.718281828f;
@@ -158,17 +162,33 @@ static int CreateShader(const std::string& vertexShader, const std::string& frag
     return program;
 }
 
+int pfnc = 0;
+void captureImage()
+{
+    pfnc++;
+    BYTE* pixels = (BYTE*)malloc(4 * SCREEN_WIDTH * SCREEN_HEIGHT);
+    glReadPixels(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, GL_BGR, GL_UNSIGNED_BYTE, pixels);
+
+    // Convert to FreeImage format & save to file
+    FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, SCREEN_WIDTH, SCREEN_HEIGHT, ((SCREEN_WIDTH * 24 + 31) / 32) * 4, 24, 0, 0, 0, false);
+    std::string path = "Vaizdai/pic_" + std::to_string(pfnc) + ".png";
+    FreeImage_Save(FIF_PNG, image, path.c_str(), 0);
+
+    //// Free resources
+    FreeImage_Unload(image);
+    free(pixels);
+}
 
 glm::vec3 camPos = glm::vec3(0, -4.0, 0);
 glm::vec3 camRot = glm::vec3(0, 0, 0);
 
 float mouseSens = 1.0f;
 int fov = 90;
-glm::vec4 vr = glm::vec4(0, 0, 1, 0);
+glm::vec4 vr = glm::vec4(2, 1, 1, 0);
 float speed = 1.0f;
 bool rs = true;
 int steps = 200;
-float AO = 0.2f;
+float AO = 0.3f;
 int msaa = 1;
 float softShadow = 20.0f;
 bool glow = false;
@@ -178,6 +198,7 @@ float eps = 5;
 
 bool fp = false;
 bool lastshow = true;
+bool vid = false;
 
 float varLimit = 5.0f;
 
@@ -255,8 +276,8 @@ int main(int argc, char *argv[])
     glm::vec3 camPosDif = vec3(0);
     glm::vec3 camRotDif = vec3(0);
 
-    ImVec4 back_color = ImVec4(0.0f / 255.0f, 43.0f / 255.0f, 54.0f / 255.0f, 1.00f);
-    //ImVec4 back_color = ImVec4(0.0f / 255.0f, 128.0f / 235.0f, 54.0f / 255.0f, 1.00f);
+    //ImVec4 back_color = ImVec4(0.0f / 255.0f, 43.0f / 255.0f, 54.0f / 255.0f, 1.00f);
+    ImVec4 back_color = ImVec4(0, 0, 0, 1);
 
     POINT f, m{ 0,0 };
 
@@ -271,7 +292,7 @@ int main(int argc, char *argv[])
     {
         wind_h = glfwGetWin32Window(window);
         GetWindowRect(wind_h, &rect);
-
+            
         SCREEN_WIDTH = rect.right - rect.left - imguiSize;
         SCREEN_HEIGHT = rect.bottom - rect.top;
 
@@ -287,7 +308,6 @@ int main(int argc, char *argv[])
         {
             glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         }
-
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -349,6 +369,15 @@ int main(int argc, char *argv[])
 
         camRot.y = 0;
         
+        /*if (vid && vr.x < 5)
+        {
+            float tmd = -2.5f;
+            camPos = vec3(tmd * sin(vr.y), tmd * cos(vr.y), 0);
+            camRot = vec3(0, 0, vr.y);
+            vr.y += 0.0075f;
+            vr.x += 0.0075f;            
+        }*/
+
         glUniform3f(glGetUniformLocation(shd, "camPos"), camPos.x, camPos.y, camPos.z);
         glUniform3f(glGetUniformLocation(shd, "camRot"), camRot.x, camRot.y, camRot.z);
         glUniform2f(glGetUniformLocation(shd, "aspect"), SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -371,58 +400,58 @@ int main(int argc, char *argv[])
         ImGui::Begin("Parametrai");
         ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
 
-        ImGui::Text("Lighting");
-        ImGui::Checkbox("Glow", &glow);
-        ImGui::SliderFloat("Glow Threshold", &glowThrMult, 10.0f, 200.0f);
-        ImGui::SliderFloat("Ambient Occlusion", &AO, 0.0f, 1.0f);
-        ImGui::SliderFloat("Soft Shadow Factor", &softShadow, 1.0f, 100.0f);
-        ImGui::Checkbox("Coloring", &color);
-        ImGui::ColorEdit3("Background color", (float*)&back_color);
+        ImGui::Text("Apsvietimas");
+        ImGui::Checkbox("Svytejimas", &glow);
+        ImGui::SliderFloat("Svytejimo slenkstis", &glowThrMult, 1.0f, 200.0f);
+        ImGui::SliderFloat("Minimali apsvieta", &AO, 0.0f, 1.0f);
+        ImGui::SliderFloat("Seseliu astrumas", &softShadow, 2.0f, 256.0f);
+        ImGui::Checkbox("Spalva", &color);
+        ImGui::ColorEdit3("Fono spalva", (float*)&back_color);
 
-        ImGui::Text("Viewing");
-        ImGui::Checkbox("Relative speed", &rs);
-        ImGui::SliderInt("Field Of View", &fov, 30, 150);
-        ImGui::SliderFloat("Mouse Sensitivity", &mouseSens, 0.1f, 2.0f);
-        ImGui::SliderInt("Anti aliasing", &msaa, 1, 3);
+        ImGui::Text("Ziurejimas");
+        ImGui::Checkbox("Relatyvus greitis", &rs);
+        ImGui::SliderInt("Matymo lauko kampas", &fov, 30, 150);
+        ImGui::SliderFloat("Peles jautrumas", &mouseSens, 0.1f, 2.0f);
+        ImGui::SliderInt("MSAA lygis", &msaa, 1, 3);
         
-        ImGui::Text("Inputs");
-        ImGui::SliderInt("Step Limit", &steps, 10, 500);
+        ImGui::Text("Kintamieji");
+        ImGui::SliderInt("Zingsniu limitas", &steps, 10, 500);
         ImGui::SliderFloat("Epsilon", &eps, 2, 10);
-        ImGui::Text("Variable (4d)");
+        ImGui::Text("Kintamasis x (turi 4 komponentus)");
         ImGui::SliderFloat("X", &vr.x, -varLimit, varLimit);
         ImGui::SliderFloat("Y", &vr.y, -varLimit, varLimit);
         ImGui::SliderFloat("Z", &vr.z, -varLimit, varLimit);
         ImGui::SliderFloat("W", &vr.w, -varLimit, varLimit);
 
-        ImGui::Text("Debug: Aspect: %.2f", SCREEN_WIDTH / (SCREEN_HEIGHT * 1.0f));
-        ImGui::Text("Distance: %.2f", distance(camPos));
-        ImGui::Text("Speed: %.1f", speed);
-        ImGui::Text("Pos: X: %.1f, Y: %.1f, Z: %.1f", camPos.x, camPos.y, camPos.z);
-        ImGui::Text("Rot: X: %.1f, Y: %.1f, Z: %.1f", RadToDeg(camRot.x), RadToDeg(camRot.y), RadToDeg(camRot.z));
+        ImGui::Text("Atstumas iki objekto: %.2f", distance(camPos));
+        ImGui::Text("Greitis: %.1f", speed);
+        ImGui::Text("Pozicija: X: %.1f, Y: %.1f, Z: %.1f", camPos.x, camPos.y, camPos.z);
+        ImGui::Text("Pasisukimas: X: %.1f, Y: %.1f, Z: %.1f", RadToDeg(camRot.x), RadToDeg(camRot.y), RadToDeg(camRot.z));
 
         if (ImGui::Button("Info", ImVec2(100, 30)))
         {
             const char* infotext = R"(
-Controls:
-
-Movement:
-    w - forwards
-    a - left
-    s - backwards
-    d - right
-    q - up
-    e - down
-    Scroolwheel - change speed
+Judejimas:
+    w - priekin
+    a - kairen
+    s - atgal
+    d - desinen
+    q - aukstyn
+    e - zemyn
+    peles ratas - keisti greiti
             
-Rotation:
-    v - enable focus mode in window
-    Use mouse to look around
+Sukimasis:
+    v - ijungti/isjungti sukimasi su pele
+    Naudoti pele zvalgymuisi
+
+Kitka:
+    i - irasyti matoma vaizda png formatu
 )";
 
             size_t strli = strlen(infotext);
             wchar_t* infO = new wchar_t[strli + 1];
             mbstowcs_s(NULL, infO, strli + 1, infotext, strli);
-            MessageBoxW(wind_h, (LPCWSTR)(infO), (LPCWSTR)L"Controls", MB_OK | MB_ICONINFORMATION);
+            MessageBoxW(wind_h, (LPCWSTR)(infO), (LPCWSTR)L"Kontroliavimas", MB_OK | MB_ICONINFORMATION);
         }
 
         ImGui::End();
@@ -435,6 +464,11 @@ Rotation:
         
         glfwPollEvents();
         glfwSwapBuffers(window);
+
+        /*if (vid && vr.x < 5)
+        {
+            captureImage();
+        }*/
     }
 
     glDeleteBuffers(1, &VBO);
@@ -464,6 +498,16 @@ void keyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods
                 case GLFW_KEY_V:
                 {
                     fp = !fp;
+                    break;
+                }
+                case GLFW_KEY_I:
+                {
+                    captureImage();
+                    break;
+                }
+                case GLFW_KEY_J:
+                {
+                    vid = true;
                     break;
                 }
             }
