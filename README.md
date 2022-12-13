@@ -1,7 +1,9 @@
 # 3D-Julia
 Fraktalų atvaizdavimas trimatėje erdvėje
 
-https://youtube.com/watch?v=1Y2Nwu6XFhU
+![test](https://user-images.githubusercontent.com/74368343/207424131-724f8ee7-4da7-4546-b7be-28024e916d0d.png)
+
+https://www.youtube.com/watch?v=PxuoigfIPjc
 
 Sukurta su C++, OpenGL, GLFW, ImGui ir FreeImage bibliotekomis Adomo Bieliūno 2022 metų pabaigoje
 OpenGL - kompiuterio GPU naudojimas
