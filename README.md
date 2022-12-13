@@ -5,4 +5,6 @@ Sukurta su C++, OpenGL, GLFW ir ImGui bibliotekomis Adomo Bieliūno 2022 metų p
 
 Norint naudotis programa reikia tiesiog palesiti run.bat failą
 
-Pagrindinis kodas yra app.cpp, frac.shader ir functions.h failuose
+Pagrindinis kodas yra 3D-Julia/src/vendor/app.cpp, x64/Release/frac.shader ir x64/Release/functions.h failuose
+
+Kad pakeisti kodą galima atidaryti .sln failą, jei yra instaliuota Visual Studio 2022
