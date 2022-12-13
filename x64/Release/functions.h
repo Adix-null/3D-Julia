@@ -7,15 +7,15 @@ using namespace glm;
 
 static vec4 var = vec4(0, 0, 0, 0);
 
-
-
 //function inj
 
+//Funkcija tiesiskai interpoliuojanti verte vienam intervale i kita
 inline float map(float OrMin, float OrMax, float NewMin, float NewMax, float val)
 {
 	return ((val - OrMin) * (NewMax - NewMin) / (OrMax - OrMin)) + NewMin;
 }
 
+//Tasko sukimas 3d erdveje 
 inline vec3 rotate(vec3 rot, vec3 pt)
 {
 	mat3 identity = mat3(
@@ -62,6 +62,7 @@ inline vec3 rotate(vec3 rot, vec3 pt)
 	return pt * rotx * roty * rotz;
 }
 
+//Vertimai tarp RGB ir HSL spalvos erdviu
 inline vec3 rgb2hsl(vec3 c) {
 	float h = 0.0;
 	float s = 0.0;
@@ -76,7 +77,6 @@ inline vec3 rgb2hsl(vec3 c) {
 	if (cMax > cMin) {
 		float cDelta = cMax - cMin;
 
-		//s = l < .05 ? cDelta / ( cMax + cMin ) : cDelta / ( 2.0 - ( cMax + cMin ) ); Original
 		s = l < .0 ? cDelta / (cMax + cMin) : cDelta / (2.0 - (cMax + cMin));
 
 		if (r == cMax) {
@@ -104,6 +104,7 @@ inline vec3 hsl2rgb(vec3 c)
 	return c.z * mix(vec3(k.x), clamp(p - vec3(k.x), vec3(0.0), vec3(1.0)), vec3(c.y));
 }
 
+//Operacijos tarp dvieju objektu
 inline float unite(float d1, float d2)
 {
 	return min(d1, d2);
@@ -122,6 +123,7 @@ inline vec3 infinite(vec3 pos, float c)
 	return mod(pos + vec3(0.5) * c, c) - vec3(0.5) * c;
 }
 
+//Ivairios SDF funkcijos
 inline float distMandelbulb(vec3 pos) 
 {
 	vec3 z = pos;
@@ -276,7 +278,7 @@ inline float distJulia(vec3 pos, vec4 c)
 	return 0.25 * sqrt(mz2 / md2) * log(mz2);
 }
 
-
+//Pagrindinei app.cpp progrmamai perduodama funkcija
 inline float distance(vec3 pos)
 {
 	vec3 inf = infinite(pos, 2);

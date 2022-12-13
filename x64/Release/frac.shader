@@ -4,9 +4,7 @@
 uniform vec4 var;
 //injection
 
-float PI = 3.14159265358979;
-
-
+//Deklaruojami kintamieji
 in vec2 pos;
 
 out vec4 color;
@@ -39,6 +37,7 @@ vec3 lights[2];
 float angle, intensity;
 int stL;
 
+//Pagrindine spindulio zingsniavimo funkcija
 vec4 march(vec3 rayPos, vec3 rayDir)
 {
 	int st = 0;
@@ -66,19 +65,7 @@ vec4 march(vec3 rayPos, vec3 rayDir)
 		return vec4(clp, 0);
 }
 
-float shadow(in vec3 ro, in vec3 rd, float mint, float maxt)
-{
-	float t = mint;
-	while (t < maxt)
-	{
-		float h = distance(ro + rd * t);
-		if (h < 0.001)
-			return 0.0;
-		t += h;
-	}
-	return 1.0;
-}
-
+//Seselio astrumo funkcija
 float softShadow(in vec3 ro, in vec3 rd, float mint, float maxt, float k)
 {
 	float res = 1.0;
@@ -100,24 +87,20 @@ float softShadow(in vec3 ro, in vec3 rd, float mint, float maxt, float k)
 	return res;
 }
 
-
 vec3 compute(vec2 aaCoord)
 {
 	float d = pow(10, -eps);
 
+	//Nustatoma spindulio kryptis su perspektyvine projekcija
 	vec3 rd = rotate(camRot, normalize(vec3(
 		sin((pos.x + aaCoord.x) * 0.5 * fov), 1,
 		sin((pos.y + aaCoord.y) * 0.5 * fov * aspect.y / aspect.x))));
 	vec4 dp = march(camPos, normalize(rd));
 
+	//Jei dp.w = 0, tai spindulys objekto nepaliete
 	if (dp.w != 0)
 	{
-		/*vec3 normal = normalize(distance(dp.xyz) - vec3(
-			distance(dp.xyz - vec3(d, 0, 0)),
-			distance(dp.xyz - vec3(0, d, 0)),
-			distance(dp.xyz - vec3(0, 0, d))
-		));*/
-
+		//Apskaiciuojama pavirsiaus normale (angl. normal vector)
 		vec3 normal = normalize(vec3(
 			distance(vec3(dp.x + d, dp.y, dp.z)) - distance(vec3(dp.x - d, dp.y, dp.z)),
 			distance(vec3(dp.x, dp.y + d, dp.z)) - distance(vec3(dp.x, dp.y - d, dp.z)),
@@ -129,6 +112,7 @@ vec3 compute(vec2 aaCoord)
 		if (dot(normal, dirc) < dot(-normal, dirc))
 			normal = -normal;
 
+		//Pereinama per kiekviena sviesos saltini
 		bool direct = false;
 		intensity = 0;
 		for (int i = 0; i < lights.length(); i++)
@@ -140,6 +124,7 @@ vec3 compute(vec2 aaCoord)
 				intensity += map(0, 1, AO, 1, sh * max(dot(normal, normalize(lights[i] - dp.xyz)), 0));
 			}
 		}
+		//Reaguojama i taska atsizvelgiant ar jis tiesiogiai apsviestas
 		if (direct)
 		{
 			intensity = min(intensity, 1);
@@ -149,8 +134,8 @@ vec3 compute(vec2 aaCoord)
 			intensity = map(0, 1, 0, AO, (1 - pow(min(dp.w / 100, 1), 2)));
 		}
 
-		vec3 hsl;
-		hsl = vec3(mod(length(dp.xyz) * 2, 3.0), 0.6, 0.8);
+		//spalvinimas
+		vec3 hsl = vec3(mod(length(dp.xyz) * 2, 3.0), 0.6, 0.8);
 
 		if(coloring)
 			return intensity * vec3(hsl2rgb(hsl));
@@ -159,6 +144,7 @@ vec3 compute(vec2 aaCoord)
 	}
 	else
 	{
+		//Jei prasoves spindulys praleke pakankamai arti yra taikomas svytejimas
 		float glowdist = distance(dp.xyz);
 		vec3 glowColor = vec3(1, 1, 1);
 		if (glowdist < threshold && glow)
@@ -171,13 +157,13 @@ vec3 compute(vec2 aaCoord)
 	}
 }
 
-
 void main()
 {
 	lights[0] = vec3(0, 0, 30);
 	lights[1] = vec3(0, -4, 2);
 	//lights[1] = camPos;
 
+	//MSAA paskirtis - susvelninti kontrasta, naudojant keliu meginiu vienam pikselyje sumaisyma
 	if (msaa > 1)
 	{
 		//pixel width

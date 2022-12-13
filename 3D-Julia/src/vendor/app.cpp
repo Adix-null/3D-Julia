@@ -36,7 +36,7 @@ float RadToDeg(float rad)
     return rad * 57.2957795f;
 }
 
-
+//Deklaruojamos ivesties funkcijos
 void keyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
@@ -45,6 +45,7 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+//Nuskaitomi ir kompiliuojai seseliuokles (angl. shader) failai
 static std::vector<std::string> ParseShader(const std::string& shader, const std::string& header)
 {
     std::ifstream stream(shader);
@@ -162,6 +163,7 @@ static int CreateShader(const std::string& vertexShader, const std::string& frag
     return program;
 }
 
+//Vaizdo irasimo funkcija su FreeImage biblioteka
 int pfnc = 0;
 void captureImage()
 {
@@ -179,6 +181,7 @@ void captureImage()
     free(pixels);
 }
 
+//Deklaruojami ivairus kintamieji
 glm::vec3 camPos = glm::vec3(0, -4.0, 0);
 glm::vec3 camRot = glm::vec3(0, 0, 0);
 
@@ -186,7 +189,7 @@ float mouseSens = 1.0f;
 int fov = 90;
 glm::vec4 vr = glm::vec4(2, 1, 1, 0);
 float speed = 1.0f;
-bool rs = true;
+bool relSpeed = true;
 int steps = 200;
 float AO = 0.3f;
 int msaa = 1;
@@ -196,10 +199,11 @@ bool color = true;
 float glowThrMult = 30;
 float eps = 5;
 
-bool fp = false;
+bool viewFocus = false;
 bool lastshow = true;
 bool vid = false;
 
+float movSpeed;
 float varLimit = 5.0f;
 
 void toggleCursor(bool show)
@@ -223,6 +227,7 @@ int main(int argc, char *argv[])
     if (!glfwInit())
         return -1;
 
+    //Inicijuojamas OpenGl langas
     GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "3D Julia", NULL, NULL);
     if(!window)
     {
@@ -234,6 +239,7 @@ int main(int argc, char *argv[])
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0);
 
+    //Iskvieciamos ivesties funkcijos
     glfwSetKeyCallback(window, keyCallBack);
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
@@ -249,7 +255,6 @@ int main(int argc, char *argv[])
     glGenBuffers(1, &VBO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
     
     glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
 
@@ -258,13 +263,16 @@ int main(int argc, char *argv[])
 
 	std::vector<std::string> ParsedShader;
 
+    //Kompiliuojami seseliuokliai
 	if(argc > 2)
 		ParsedShader = ParseShader(argv[1], argv[2]);
 	else
         ParsedShader = ParseShader("../x64/Release/frac.shader", "../x64/Release/functions.h");
 
     unsigned int shd = CreateShader(ParsedShader[0], ParsedShader[1]);
+    glUseProgram(shd);
        
+    //Sukuriamas Imgui langas
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -272,11 +280,9 @@ int main(int argc, char *argv[])
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-
     glm::vec3 camPosDif = vec3(0);
     glm::vec3 camRotDif = vec3(0);
 
-    //ImVec4 back_color = ImVec4(0.0f / 255.0f, 43.0f / 255.0f, 54.0f / 255.0f, 1.00f);
     ImVec4 back_color = ImVec4(0, 0, 0, 1);
 
     POINT f, m{ 0,0 };
@@ -290,6 +296,15 @@ int main(int argc, char *argv[])
 
     while(!glfwWindowShouldClose(window))
     {
+        //Isvalomi praeito kadro duomenys
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();       
+
+        //Nustatoma tinkama abieju langu pozicija
         wind_h = glfwGetWin32Window(window);
         GetWindowRect(wind_h, &rect);
             
@@ -309,24 +324,17 @@ int main(int argc, char *argv[])
             glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
         }
 
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();        
-
         ImGui::SetNextWindowPos(ImVec2(SCREEN_WIDTH, 0));
         ImGui::SetNextWindowSize(ImVec2(imguiSize, SCREEN_HEIGHT));
 
-        glUseProgram(shd);
-
+        //Reagavimas i peles ivesti
         GetCursorPos(&f);
         ScreenToClient(wind_h, &f);
         m.x = (LONG)(SCREEN_WIDTH * 0.5);
         m.y = (LONG)(SCREEN_HEIGHT * 0.5);
 
-        if (f.x > 0 && f.y > 0 && f.x < SCREEN_WIDTH && f.y < SCREEN_HEIGHT && fp)
+        //Sukimasis
+        if (f.x > 0 && f.y > 0 && f.x < SCREEN_WIDTH && f.y < SCREEN_HEIGHT && viewFocus)
         {
             if (f.x - m.x != 0 || f.y - m.y != 0)
             {
@@ -340,24 +348,27 @@ int main(int argc, char *argv[])
         else
             toggleCursor(true);
 
+        //Judejimas
+        movSpeed = speed * ImGui::GetIO().DeltaTime;
         if (GetAsyncKeyState(GLFW_KEY_D) < 0)
-            camPosDif.x += speed * ImGui::GetIO().DeltaTime;
+            camPosDif.x += movSpeed;
         if (GetAsyncKeyState(GLFW_KEY_A) < 0)
-            camPosDif.x -= speed * ImGui::GetIO().DeltaTime;
+            camPosDif.x -= movSpeed;
         if (GetAsyncKeyState(GLFW_KEY_W) < 0)
-            camPosDif.y += speed * ImGui::GetIO().DeltaTime;
+            camPosDif.y += movSpeed;
         if (GetAsyncKeyState(GLFW_KEY_S) < 0)
-            camPosDif.y -= speed * ImGui::GetIO().DeltaTime;
+            camPosDif.y -= movSpeed;
         if (GetAsyncKeyState(GLFW_KEY_E) < 0)
-            camPosDif.z += speed * ImGui::GetIO().DeltaTime;
+            camPosDif.z += movSpeed;
         if (GetAsyncKeyState(GLFW_KEY_Q) < 0)
-            camPosDif.z -= speed * ImGui::GetIO().DeltaTime;
+            camPosDif.z -= movSpeed;
 
+        //Vartotojo ivesties vertimas i duoemenis seseliuoklei
         camRot += camRotDif;
 
         tmpd = max(abs(distance(camPos)), 0.02f);
         dsp = 1.1f;
-        camPos += vec3(rs ? min(pow(tmpd, dsp), pow(tmpd, 1 / dsp)) : 1) * rotate(camRot, camPosDif);
+        camPos += vec3(relSpeed ? min(pow(tmpd, dsp), pow(tmpd, 1 / dsp)) : 1) * rotate(camRot, camPosDif);
 
         camRot.x = fmod(camRot.x, DegToRad(360));
         camRot.z = fmod(camRot.z, DegToRad(360));
@@ -368,7 +379,8 @@ int main(int argc, char *argv[])
             camRot.x = DegToRad(-89.9);
 
         camRot.y = 0;
-        
+
+        //parametrai promo video
         /*if (vid && vr.x < 5)
         {
             float tmd = -2.5f;
@@ -378,6 +390,7 @@ int main(int argc, char *argv[])
             vr.x += 0.0075f;            
         }*/
 
+        //Seseliuoklei perduodami duomenys
         glUniform3f(glGetUniformLocation(shd, "camPos"), camPos.x, camPos.y, camPos.z);
         glUniform3f(glGetUniformLocation(shd, "camRot"), camRot.x, camRot.y, camRot.z);
         glUniform2f(glGetUniformLocation(shd, "aspect"), SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -396,7 +409,7 @@ int main(int argc, char *argv[])
 
         glDrawArrays(GL_TRIANGLES, 0, 6);                
 
-
+        //Sukuriamas Imgui parametru langas 
         ImGui::Begin("Parametrai");
         ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
 
@@ -409,14 +422,14 @@ int main(int argc, char *argv[])
         ImGui::ColorEdit3("Fono spalva", (float*)&back_color);
 
         ImGui::Text("Ziurejimas");
-        ImGui::Checkbox("Relatyvus greitis", &rs);
+        ImGui::Checkbox("Relatyvus greitis", &relSpeed);
         ImGui::SliderInt("Matymo lauko kampas", &fov, 30, 150);
         ImGui::SliderFloat("Peles jautrumas", &mouseSens, 0.1f, 2.0f);
         ImGui::SliderInt("MSAA lygis", &msaa, 1, 3);
         
         ImGui::Text("Kintamieji");
         ImGui::SliderInt("Zingsniu limitas", &steps, 10, 500);
-        ImGui::SliderFloat("Epsilon", &eps, 2, 10);
+        ImGui::SliderFloat("Epsilon (normales skaiciavimui)", &eps, 2, 10);
         ImGui::Text("Kintamasis x (turi 4 komponentus)");
         ImGui::SliderFloat("X", &vr.x, -varLimit, varLimit);
         ImGui::SliderFloat("Y", &vr.y, -varLimit, varLimit);
@@ -428,6 +441,7 @@ int main(int argc, char *argv[])
         ImGui::Text("Pozicija: X: %.1f, Y: %.1f, Z: %.1f", camPos.x, camPos.y, camPos.z);
         ImGui::Text("Pasisukimas: X: %.1f, Y: %.1f, Z: %.1f", RadToDeg(camRot.x), RadToDeg(camRot.y), RadToDeg(camRot.z));
 
+        //Informacija
         if (ImGui::Button("Info", ImVec2(100, 30)))
         {
             const char* infotext = R"(
@@ -454,6 +468,8 @@ Kitka:
             MessageBoxW(wind_h, (LPCWSTR)(infO), (LPCWSTR)L"Kontroliavimas", MB_OK | MB_ICONINFORMATION);
         }
 
+        //Kadro pabaiga
+
         ImGui::End();
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -465,12 +481,13 @@ Kitka:
         glfwPollEvents();
         glfwSwapBuffers(window);
 
-        /*if (vid && vr.x < 5)
+        if (vid)
         {
             captureImage();
-        }*/
+        }
     }
 
+    //Uzdarius programa atlaisvinami resursai
     glDeleteBuffers(1, &VBO);
     glDeleteProgram(shd);
 
@@ -483,7 +500,7 @@ Kitka:
     return 0;
 }
 
-
+//Klaviaturos ivestis
 void keyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     //std::cout << "key " << key << "\tscancode " << scancode << "\taction " << action << "\tmods " << mods << "\n";
@@ -497,7 +514,7 @@ void keyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods
             {
                 case GLFW_KEY_V:
                 {
-                    fp = !fp;
+                    viewFocus = !viewFocus;
                     break;
                 }
                 case GLFW_KEY_I:
@@ -516,6 +533,7 @@ void keyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods
     }
 }
 
+//Peles rato ivestis
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     speed += (float)(yoffset) * 0.1f;
