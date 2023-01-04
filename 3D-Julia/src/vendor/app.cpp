@@ -187,7 +187,8 @@ glm::vec3 camRot = glm::vec3(0, 0, 0);
 
 float mouseSens = 1.0f;
 int fov = 90;
-glm::vec4 vr = glm::vec4(2, 1, 1, 0);
+glm::vec4 vr = glm::vec4(0, 0, 0, 0);
+glm::vec3 vr2 = glm::vec3(0, 0, 0);
 float speed = 1.0f;
 bool relSpeed = true;
 int steps = 200;
@@ -400,6 +401,7 @@ int main(int argc, char *argv[])
         glUniform1i(glGetUniformLocation(shd, "coloring"), color);
         glUniform1i(glGetUniformLocation(shd, "msaa"), msaa);
         glUniform4f(glGetUniformLocation(shd, "var"), vr.x, vr.y, vr.z, vr.w);
+        glUniform3f(glGetUniformLocation(shd, "var2"), vr2.x, vr2.y, vr2.z);
         glUniform1f(glGetUniformLocation(shd, "AO"), AO);
         glUniform1f(glGetUniformLocation(shd, "eps"), eps);
         glUniform1f(glGetUniformLocation(shd, "glowMult"), glowThrMult);
@@ -429,12 +431,16 @@ int main(int argc, char *argv[])
         
         ImGui::Text("Kintamieji");
         ImGui::SliderInt("Zingsniu limitas", &steps, 10, 500);
-        ImGui::SliderFloat("Epsilon (normales skaiciavimui)", &eps, 2, 10);
-        ImGui::Text("Kintamasis x (turi 4 komponentus)");
-        ImGui::SliderFloat("X", &vr.x, -varLimit, varLimit);
-        ImGui::SliderFloat("Y", &vr.y, -varLimit, varLimit);
-        ImGui::SliderFloat("Z", &vr.z, -varLimit, varLimit);
-        ImGui::SliderFloat("W", &vr.w, -varLimit, varLimit);
+        ImGui::SliderFloat("Epsilon (normalei)", &eps, 2, 10);
+        ImGui::Text("4D Kintamasis x");
+        ImGui::SliderFloat("Xx", &vr.x, -varLimit, varLimit);
+        ImGui::SliderFloat("Xy", &vr.y, -varLimit, varLimit);
+        ImGui::SliderFloat("Xz", &vr.z, -varLimit, varLimit);
+        ImGui::SliderFloat("Xw", &vr.w, -varLimit, varLimit);
+        ImGui::Text("3D Kintamasis y");
+        ImGui::SliderFloat("Yx", &vr2.x, -varLimit, varLimit);
+        ImGui::SliderFloat("Yy", &vr2.y, -varLimit, varLimit);
+        ImGui::SliderFloat("Yz", &vr2.z, -varLimit, varLimit);
 
         ImGui::Text("Atstumas iki objekto: %.2f", distance(camPos));
         ImGui::Text("Greitis: %.1f", speed);
@@ -477,6 +483,7 @@ Kitka:
         camPosDif = vec3(0);
         camRotDif = vec3(0);
         var = vr;
+        var2 = vr2;
         
         glfwPollEvents();
         glfwSwapBuffers(window);

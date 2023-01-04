@@ -2,6 +2,7 @@
 #version 330 core
 
 uniform vec4 var;
+uniform vec3 var2;
 //injection
 
 //Deklaruojami kintamieji

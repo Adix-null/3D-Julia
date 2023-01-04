@@ -6,6 +6,7 @@
 using namespace glm;
 
 static vec4 var = vec4(0, 0, 0, 0);
+static vec3 var2 = vec4(0, 0, 0, 0);
 
 //function inj
 
@@ -251,6 +252,62 @@ inline float distMandelbox(vec3 pos)
 	return r / abs(dr);
 }
 
+inline float distKIFS(vec3 pos, vec3 c, vec3 r1, vec3 r2, float scale) 
+{
+	scale = max(1.0f, scale);
+	vec3 z = pos;
+	float bailout = 100;
+	int i = 0;
+	float r = z.x * z.x + z.y * z.y + z.z * z.z;
+	for (i = 0; i < 15 && r < bailout; i++) 
+	{		
+		z = rotate(r1, z);
+
+		z = abs(z);
+		//swaps
+		if (z.x - z.y < 0) { float x1 = z.y; z.y = z.x; z.x = x1; }
+		if (z.x - z.z < 0) { float x1 = z.z; z.z = z.x; z.x = x1; }
+		if (z.y - z.z < 0) { float y1 = z.z; z.z = z.y; z.y = y1; }
+
+		z.z -= 0.5 * c.z * (scale - 1) / scale;
+		z.z = -abs(-z.z);
+		z.z += 0.5 * c.z * (scale - 1) / scale;
+
+		z = rotate(r2, z);
+
+		//z = scale * (z - c) + c;
+		z.x = scale * z.x - c.x * (scale - 1);
+		z.y = scale * z.y - c.y * (scale - 1);
+		z.z = scale * z.z;
+
+		/*if (z.z > 0.5 * c.z * (scale - 1))
+			z.z -= c.z * (scale - 1);*/
+
+		r = z.x * z.x + z.y * z.y + z.z * z.z;
+	}
+	return (sqrt(r) - 2) * pow(scale, -i);
+}
+
+inline float distSierpinski(vec3 pos)
+{
+	vec3 z = pos;
+	float scale = 2;
+	float bailout = 10;
+	float r = z.x * z.x + z.y * z.y + z.z * z.z;
+	int i;
+	for (i = 0; i < 100 && r < bailout; i++)
+	{		
+		if (z.x + z.y < 0) {float  x1 = -z.y; z.y = -z.x; z.x = x1; }
+		if (z.x + z.z < 0) {float  x1 = -z.z; z.z = -z.x; z.x = x1; }
+		if (z.y + z.z < 0) {float  y1 = -z.z; z.z = -z.y; z.y = y1; }
+
+		z = scale * z - (scale - 1);
+
+		r = z.x * z.x + z.y * z.y + z.z * z.z;
+	}
+	return (sqrt(r) - 2) * pow(scale, -i);
+}
+
 inline vec4 qsqr(vec4 a)
 {
 	return vec4(a.x * a.x - a.y * a.y - a.z * a.z - a.w * a.w,
@@ -286,9 +343,13 @@ inline float distance(vec3 pos)
 	//return min(distBox(pos, vec3(1), vec3(0)), distPlane(pos));
 	//return min(distBoxFrame(pos, vec3(1), 0.075), distPlane(pos));
 
-	return distMandelbulb(pos);
+	//return distMandelbulb(pos);
 	//return distMenger(pos);
 	//return distMandelbox(pos);
 	//return intersect(distJulia(pos, var), distBox(pos, vec3(100, 100, 0.5), vec3(0.5)));
 	//return distJulia(pos, var);
+	
+	//return distSierpinski(pos);
+	return distKIFS(pos, var2, vec3(var.x, var.y, var.z), vec3(0), var.w);
+	//return distKIFS(pos, vec3(2, 4.8, 0), vec3(0, 0.43, 0), vec3(0, 0, 0), 1.3);
 }
