@@ -10,6 +10,7 @@ in vec2 pos;
 
 out vec4 color;
 
+uniform vec3 objcolor;
 uniform vec3 style;
 
 uniform vec3 camPos;
@@ -138,10 +139,12 @@ vec3 compute(vec2 aaCoord)
 		//spalvinimas
 		vec3 hsl = vec3(mod(length(dp.xyz) * 2, 3.0), 0.6, 0.8);
 
-		if(coloring)
+		if (coloring)
+		{
 			return intensity * vec3(hsl2rgb(hsl));
+		}
 		else
-			return vec3(intensity);
+			return vec3(intensity * objcolor);
 	}
 	else
 	{

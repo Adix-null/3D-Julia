@@ -285,6 +285,7 @@ int main(int argc, char *argv[])
     glm::vec3 camRotDif = vec3(0);
 
     ImVec4 back_color = ImVec4(0, 0, 0, 1);
+    ImVec4 obj_color = ImVec4(0, 1, 1, 1);
 
     POINT f, m{ 0,0 };
 
@@ -396,6 +397,7 @@ int main(int argc, char *argv[])
         glUniform3f(glGetUniformLocation(shd, "camRot"), camRot.x, camRot.y, camRot.z);
         glUniform2f(glGetUniformLocation(shd, "aspect"), SCREEN_WIDTH, SCREEN_HEIGHT);
         glUniform3f(glGetUniformLocation(shd, "style"), back_color.x, back_color.y, back_color.z);
+        glUniform3f(glGetUniformLocation(shd, "objcolor"), obj_color.x, obj_color.y, obj_color.z);
         glUniform1f(glGetUniformLocation(shd, "mouseSens"), mouseSens);
         glUniform1i(glGetUniformLocation(shd, "glow"), glow);
         glUniform1i(glGetUniformLocation(shd, "coloring"), color);
@@ -420,7 +422,8 @@ int main(int argc, char *argv[])
         ImGui::SliderFloat("Svytejimo slenkstis", &glowThrMult, 1.0f, 200.0f);
         ImGui::SliderFloat("Minimali apsvieta", &AO, 0.0f, 1.0f);
         ImGui::SliderFloat("Seseliu astrumas", &softShadow, 2.0f, 256.0f);
-        ImGui::Checkbox("Spalva", &color);
+        ImGui::Checkbox("Spalvinimas nuo centro", &color);
+        ImGui::ColorEdit3("Objekto spalva", (float*)&obj_color);
         ImGui::ColorEdit3("Fono spalva", (float*)&back_color);
 
         ImGui::Text("Ziurejimas");
