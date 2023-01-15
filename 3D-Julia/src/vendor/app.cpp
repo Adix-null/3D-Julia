@@ -45,6 +45,32 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+static void InfoPopUp()
+{
+    const char* infotext = R"(
+Judejimas:
+    w - priekin
+    a - kairen
+    s - atgal
+    d - desinen
+    q - aukstyn
+    e - zemyn
+    peles ratas - keisti greiti
+            
+Sukimasis:
+    v - ijungti/isjungti sukimasi su pele
+    Naudoti pele zvalgymuisi
+
+Kitka:
+    i - irasyti matoma vaizda png formatu
+)";
+
+    size_t strli = strlen(infotext);
+    wchar_t* infO = new wchar_t[strli + 1];
+    mbstowcs_s(NULL, infO, strli + 1, infotext, strli);
+    MessageBoxW(NULL, (LPCWSTR)(infO), (LPCWSTR)L"Kontroliavimas", MB_OK | MB_ICONINFORMATION);
+}
+
 //Nuskaitomi ir kompiliuojai seseliuokles (angl. shader) failai
 static std::vector<std::string> ParseShader(const std::string& shader, const std::string& header)
 {
@@ -453,28 +479,7 @@ int main(int argc, char *argv[])
         //Informacija
         if (ImGui::Button("Info", ImVec2(100, 30)))
         {
-            const char* infotext = R"(
-Judejimas:
-    w - priekin
-    a - kairen
-    s - atgal
-    d - desinen
-    q - aukstyn
-    e - zemyn
-    peles ratas - keisti greiti
-            
-Sukimasis:
-    v - ijungti/isjungti sukimasi su pele
-    Naudoti pele zvalgymuisi
-
-Kitka:
-    i - irasyti matoma vaizda png formatu
-)";
-
-            size_t strli = strlen(infotext);
-            wchar_t* infO = new wchar_t[strli + 1];
-            mbstowcs_s(NULL, infO, strli + 1, infotext, strli);
-            MessageBoxW(wind_h, (LPCWSTR)(infO), (LPCWSTR)L"Kontroliavimas", MB_OK | MB_ICONINFORMATION);
+            InfoPopUp();
         }
 
         //Kadro pabaiga
@@ -535,6 +540,11 @@ void keyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods
                 case GLFW_KEY_J:
                 {
                     vid = true;
+                    break;
+                }
+                case GLFW_KEY_F1:
+                {
+                    InfoPopUp();
                     break;
                 }
             }
