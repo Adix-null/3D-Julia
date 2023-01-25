@@ -121,7 +121,7 @@ inline float intersect(float d1, float d2)
 
 inline vec3 infinite(vec3 pos, float c)
 {
-	return mod(pos + vec3(0.5) * c, c) - vec3(0.5) * c;
+	return mod(pos + c, c * 2) - c;
 }
 
 //Ivairios SDF funkcijos
@@ -160,7 +160,7 @@ inline float distMandelbulb(vec3 pos)
 
 inline float distPlane(vec3 pos)
 {
-	return abs(pos.z + 1.5);
+	return abs(pos.z + 2);
 }
 
 inline float distSphere(vec3 pos, float rad)
@@ -252,6 +252,7 @@ inline float distMandelbox(vec3 pos)
 	return r / abs(dr);
 }
 
+//Kaleidoskopine iteruota funkciju sistema
 inline float distKIFS(vec3 pos, vec3 c, vec3 r1, vec3 r2, float scale) 
 {
 	scale = max(1.0f, scale);
@@ -338,11 +339,21 @@ inline float distJulia(vec3 pos, vec4 c)
 //Pagrindinei app.cpp progrmamai perduodama funkcija
 inline float distance(vec3 pos)
 {
-	vec3 inf = infinite(pos, 2);
+	vec3 inf = infinite(pos, 3);
 	
 	//return min(distBox(pos, vec3(1), vec3(0)), distPlane(pos));
 	//return min(distBoxFrame(pos, vec3(1), 0.075), distPlane(pos));
 
+	//return distBox(inf, vec3(0.5), vec3(0));
+	return distBox(pos, vec3(0.5), vec3(0));
+	/*vec3 o = vec3(0.5);
+	if(var.x < 0)
+		return min(distSphere(pos, 0.5), distBox(pos, o, vec3(0.5)));
+	else if(var.x < 2)
+		return max(distSphere(pos, 0.5), distBox(pos, o, vec3(0.5)));
+	else
+		return max(-distSphere(pos, 0.5), distBox(pos, o, vec3(0.5)));*/
+	 
 	//return distMandelbulb(pos);
 	//return distMenger(pos);
 	//return distMandelbox(pos);
@@ -350,6 +361,6 @@ inline float distance(vec3 pos)
 	//return distJulia(pos, var);
 	
 	//return distSierpinski(pos);
-	return distKIFS(pos, var2, vec3(var.x, var.y, var.z), vec3(0), var.w);
+	//return distKIFS(pos, var2, vec3(var.x, var.y, var.z), vec3(0), var.w);
 	//return distKIFS(pos, vec3(2, 4.8, 0), vec3(0, 0.43, 0), vec3(0, 0, 0), 1.3);
 }

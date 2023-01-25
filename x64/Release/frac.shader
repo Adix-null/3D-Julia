@@ -102,13 +102,14 @@ vec3 compute(vec2 aaCoord)
 	//Jei dp.w = 0, tai spindulys objekto nepaliete
 	if (dp.w != 0)
 	{
-		//Apskaiciuojama pavirsiaus normale (angl. normal vector)
+		//Apskaiciuojama pavirsiaus normale
 		vec3 normal = normalize(vec3(
 			distance(vec3(dp.x + d, dp.y, dp.z)) - distance(vec3(dp.x - d, dp.y, dp.z)),
 			distance(vec3(dp.x, dp.y + d, dp.z)) - distance(vec3(dp.x, dp.y - d, dp.z)),
 			distance(vec3(dp.x, dp.y, dp.z + d)) - distance(vec3(dp.x, dp.y, dp.z - d))
 		));
 
+		//Pasirenkama normale artimesne kamerai
 		vec3 dirc = normalize(camPos - dp.xyz);
 
 		if (dot(normal, dirc) < dot(-normal, dirc))
@@ -163,9 +164,9 @@ vec3 compute(vec2 aaCoord)
 
 void main()
 {
-	lights[0] = vec3(0, 0, 30);
-	lights[1] = vec3(0, -4, 2);
-	//lights[1] = camPos;
+	lights[0] = vec3(0, 0, 5);
+	//lights[1] = vec3(0, -4, 2);
+	lights[1] = camPos;
 
 	//MSAA paskirtis - susvelninti kontrasta, naudojant keliu meginiu vienam pikselyje sumaisyma
 	if (msaa > 1)

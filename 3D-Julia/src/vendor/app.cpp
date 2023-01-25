@@ -460,7 +460,7 @@ int main(int argc, char *argv[])
         
         ImGui::Text("Kintamieji");
         ImGui::SliderInt("Zingsniu limitas", &steps, 10, 500);
-        ImGui::SliderFloat("Epsilon (normalei)", &eps, 2, 10);
+        ImGui::SliderFloat("Epsilon (10^(-E))", &eps, 2, 10);
         ImGui::Text("4D Kintamasis x");
         ImGui::SliderFloat("Xx", &vr.x, -varLimit, varLimit);
         ImGui::SliderFloat("Xy", &vr.y, -varLimit, varLimit);
