@@ -220,12 +220,13 @@ bool relSpeed = true;
 int steps = 200;
 float AO = 0.3f;
 int msaa = 1;
-float softShadow = 20.0f;
+float softShadow = 10.0f;
 bool glow = false;
 bool color = true;
 float glowThrMult = 30;
 float eps = 5;
 
+bool focusInit = false;
 bool viewFocus = false;
 bool lastshow = true;
 bool vid = false;
@@ -366,8 +367,13 @@ int main(int argc, char *argv[])
         {
             if (f.x - m.x != 0 || f.y - m.y != 0)
             {
-                camRotDif.x = mouseSens * 0.05f * ImGui::GetIO().DeltaTime * ((float)(f.y) - (SCREEN_HEIGHT * 0.5f));
-                camRotDif.z = mouseSens * 0.05f * ImGui::GetIO().DeltaTime * ((float)(f.x) - (SCREEN_WIDTH * 0.5f));
+                if (!focusInit)
+                {
+                    camRotDif.x = mouseSens * 0.05f * ImGui::GetIO().DeltaTime * ((float)(f.y) - (SCREEN_HEIGHT * 0.5f));
+                    camRotDif.z = mouseSens * 0.05f * ImGui::GetIO().DeltaTime * ((float)(f.x) - (SCREEN_WIDTH * 0.5f));
+                }
+                else
+                    focusInit = false;
                 ClientToScreen(wind_h, &m);
                 SetCursorPos(m.x, m.y);
             }
@@ -447,7 +453,7 @@ int main(int argc, char *argv[])
         ImGui::Checkbox("Svytejimas", &glow);
         ImGui::SliderFloat("Svytejimo slenkstis", &glowThrMult, 1.0f, 200.0f);
         ImGui::SliderFloat("Minimali apsvieta", &AO, 0.0f, 1.0f);
-        ImGui::SliderFloat("Seseliu astrumas", &softShadow, 2.0f, 256.0f);
+        ImGui::SliderFloat("Seseliu astrumas", &softShadow, 1.0f, 256.0f);
         ImGui::Checkbox("Spalvinimas nuo centro", &color);
         ImGui::ColorEdit3("Objekto spalva", (float*)&obj_color);
         ImGui::ColorEdit3("Fono spalva", (float*)&back_color);
@@ -456,7 +462,7 @@ int main(int argc, char *argv[])
         ImGui::Checkbox("Relatyvus greitis", &relSpeed);
         ImGui::SliderInt("Matymo lauko kampas", &fov, 30, 150);
         ImGui::SliderFloat("Peles jautrumas", &mouseSens, 0.1f, 2.0f);
-        ImGui::SliderInt("MSAA lygis", &msaa, 1, 3);
+        ImGui::SliderInt("MSAA lygis", &msaa, 0, 3);
         
         ImGui::Text("Kintamieji");
         ImGui::SliderInt("Zingsniu limitas", &steps, 10, 500);
@@ -473,7 +479,7 @@ int main(int argc, char *argv[])
 
         ImGui::Text("Atstumas iki objekto: %.2f", distance(camPos));
         ImGui::Text("Greitis: %.1f", speed);
-        ImGui::Text("Pozicija: X: %.1f, Y: %.1f, Z: %.1f", camPos.x, camPos.y, camPos.z);
+        ImGui::Text("Pozicija: X: %.10f, Y: %.10f, Z: %.10f", camPos.x, camPos.y, camPos.z);
         ImGui::Text("Pasisukimas: X: %.1f, Y: %.1f, Z: %.1f", RadToDeg(camRot.x), RadToDeg(camRot.y), RadToDeg(camRot.z));
 
         //Informacija
@@ -530,6 +536,7 @@ void keyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods
                 case GLFW_KEY_V:
                 {
                     viewFocus = !viewFocus;
+                    focusInit = true;
                     break;
                 }
                 case GLFW_KEY_I:

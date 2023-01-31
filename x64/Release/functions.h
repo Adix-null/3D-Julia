@@ -6,7 +6,7 @@
 using namespace glm;
 
 static vec4 var = vec4(0, 0, 0, 0);
-static vec3 var2 = vec4(0, 0, 0, 0);
+static vec3 var2 = vec3(0, 0, 0);
 
 //function inj
 
@@ -112,7 +112,7 @@ inline float unite(float d1, float d2)
 }
 inline float subtract(float d1, float d2)
 {
-	return max(-d1, d2);
+	return max(d1, -d2);
 }
 inline float intersect(float d1, float d2)
 {
@@ -130,14 +130,14 @@ inline float distMandelbulb(vec3 pos)
 	vec3 z = pos;
 	float dr = 1.0;
 	float r = 0.0;
-	int iterations = 0;
 	float power = 3.0 + var.x;
 
-	for (int i = 0; i < 10; i++) {
-		iterations = i;
+	for (int i = 0; i < 15; i++) 
+	{
 		r = length(z);
 
-		if (r > 2.0) {
+		if (r > 2.0) 
+		{
 			break;
 		}
 
@@ -148,8 +148,8 @@ inline float distMandelbulb(vec3 pos)
 
 		// scale and rotate the point
 		float zr = pow(r, power);
-		theta = theta * power;
-		phi = phi * power;
+		theta *= power;
+		phi *= power;
 
 		// convert back to cartesian coordinates
 		z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
@@ -158,9 +158,9 @@ inline float distMandelbulb(vec3 pos)
 	return 0.5 * log(r) * r / dr;
 }
 
-inline float distPlane(vec3 pos)
+inline float distPlane(vec3 pos, float h)
 {
-	return abs(pos.z + 2);
+	return abs(pos.z - h);
 }
 
 inline float distSphere(vec3 pos, float rad)
@@ -189,7 +189,7 @@ inline float distMenger(vec3 pos)
 	float d = distBox(pos, vec3(1.0), vec3(0));
 
 	float s = 1.0;
-	for (int m = 0; m < 5; m++)
+	for (int m = 0; m < 8; m++)
 	{
 		vec3 a = mod(pos * vec3(s), vec3(2.0)) - vec3(1.0);
 		s *= 3.0;
@@ -233,7 +233,7 @@ inline vec4 sphereFold(vec3 pos, float dz)
 inline float distMandelbox(vec3 pos)
 {
 	vec3 z = pos;
-	float Iterations = var.y;
+	float Iterations = var.y * 10;
 	float Scale = var.x;
 	vec3 offset = z;
 	float dr = 1.0;
@@ -296,7 +296,7 @@ inline float distSierpinski(vec3 pos)
 	float bailout = 10;
 	float r = z.x * z.x + z.y * z.y + z.z * z.z;
 	int i;
-	for (i = 0; i < 100 && r < bailout; i++)
+	for (i = 0; i < 20 && r < bailout; i++)
 	{		
 		if (z.x + z.y < 0) {float  x1 = -z.y; z.y = -z.x; z.x = x1; }
 		if (z.x + z.z < 0) {float  x1 = -z.z; z.z = -z.x; z.x = x1; }
@@ -317,13 +317,33 @@ inline vec4 qsqr(vec4 a)
 		2.0 * a.x * a.w);
 }
 
-inline float distJulia(vec3 pos, vec4 c)
+inline float distJuliaAlt(vec3 pos, vec4 c)
 {
-	vec4 z = vec4(pos, 0);
+	vec4 z = vec4(pos.x, pos.y, pos.z, 0);
 	float md2 = 1;
 	float mz2 = dot(z, z);
 
-	for (int i = 0; i < 15; i++)
+	for (int i = 0; i < 100; i++)
+	{
+		md2 *= 4.0 * mz2;
+		z = qsqr(z) + c; // z  -> z^2 + c
+
+		mz2 = dot(z, z);
+
+		if (mz2 > 4.0) break;
+	}
+
+	return 0.25 * sqrt(mz2 / md2) * log(mz2);
+}
+
+inline float distJulia(vec3 pos, vec4 c)
+{
+	vec4 z = vec4(pos.x, pos.y, pos.z, 0);
+	float md2 = 1;
+	float mz2 = dot(z, z);
+	c = vec4(pos.z, var2.y, 0, 0);
+
+	for (int i = 0; i < 100; i++)
 	{
 		md2 *= 4.0 * mz2;
 		z = qsqr(z) + c; // z  -> z^2 + c
@@ -345,22 +365,24 @@ inline float distance(vec3 pos)
 	//return min(distBoxFrame(pos, vec3(1), 0.075), distPlane(pos));
 
 	//return distBox(inf, vec3(0.5), vec3(0));
-	return distBox(pos, vec3(0.5), vec3(0));
+	//return distBox(pos, vec3(0.5), vec3(0));
+	//return distSphere(pos, 3);
 	/*vec3 o = vec3(0.5);
 	if(var.x < 0)
-		return min(distSphere(pos, 0.5), distBox(pos, o, vec3(0.5)));
+		return unite(distSphere(pos, 0.5), distBox(pos, o, o));
 	else if(var.x < 2)
-		return max(distSphere(pos, 0.5), distBox(pos, o, vec3(0.5)));
+		return intersect(distSphere(pos, 0.5), distBox(pos, o, o));
 	else
-		return max(-distSphere(pos, 0.5), distBox(pos, o, vec3(0.5)));*/
+		return subtract(distBox(pos, o, o), distSphere(pos, 0.5));*/
 	 
-	//return distMandelbulb(pos);
 	//return distMenger(pos);
-	//return distMandelbox(pos);
-	//return intersect(distJulia(pos, var), distBox(pos, vec3(100, 100, 0.5), vec3(0.5)));
-	//return distJulia(pos, var);
-	
 	//return distSierpinski(pos);
+	
+	//return distMandelbox(pos);
+	//return unite(distMandelbulb(pos), distPlane(pos, -2));
 	//return distKIFS(pos, var2, vec3(var.x, var.y, var.z), vec3(0), var.w);
-	//return distKIFS(pos, vec3(2, 4.8, 0), vec3(0, 0.43, 0), vec3(0, 0, 0), 1.3);
+	///return distKIFS(pos, vec3(2, 4.8, 0), vec3(0, 0.43, 0), vec3(0, 0, 0), 1.3);
+	 
+	//return subtract(distJuliaAlt(pos, var), distBox(pos, vec3(10, 10, 3), vec3(0, 0, -(var2.x + 3))));
+	return subtract(distJulia(pos, var), distBox(pos, vec3(10, 10, 3), vec3(0, 0, -(var2.x + 3))));
 }

@@ -134,7 +134,7 @@ vec3 compute(vec2 aaCoord)
 		}
 		else
 		{
-			intensity = map(0, 1, 0, AO, (1 - pow(min(dp.w / 100, 1), 2)));
+			intensity = map(0, 1, 0, AO, 1 - pow(min(dp.w / 100, 1), 2));
 		}
 
 		//spalvinimas
@@ -162,35 +162,46 @@ vec3 compute(vec2 aaCoord)
 	}
 }
 
+float rand(float n) 
+{ 
+	return fract(sin(n) * 43758.5453123); 
+}
+
+
 void main()
 {
-	lights[0] = vec3(0, 0, 5);
+	lights[0] = vec3(9, 5, 30);
 	//lights[1] = vec3(0, -4, 2);
-	lights[1] = camPos;
+	//lights[0] = camPos;
+	//lights[0] = vec3(0);
 
 	//MSAA paskirtis - susvelninti kontrasta, naudojant keliu meginiu vienam pikselyje sumaisyma
+	//pixel width
+	vec2 dpxl = vec2(2 / (aspect.x - 1), 2 / (aspect.y - 1));
+	vec2 dspxl = dpxl / msaa;
 	if (msaa > 1)
 	{
-		//pixel width
-		vec2 dpxl = vec2(2 / (aspect.x - 1), 2 / (aspect.y - 1));
-		vec2 dspxl = dpxl / msaa;
-
 		vec3 avg = vec3(0);
 		for (int i = 0; i < msaa; i++)
 		{
 			for (int j = 0; j < msaa; j++)
 			{
-				avg += compute(vec2(-dpxl.x * 0.5 + dspxl.x * (0.5 + i), -dpxl.y * 0.5 + dspxl.y * (0.5 + j)));
+				avg += compute(vec2(
+					-dpxl.x * 0.5 + dspxl.x * (0.5 + i + 0.25 * rand(i)),
+					-dpxl.y * 0.5 + dspxl.y * (0.5 + j + 0.25 * rand(j))));
 			}
 		}
 
 		color = vec4(avg / (msaa * msaa), 1);
 	}
-	else
+	else if(msaa == 1)
 	{
-		color = vec4(compute(vec2(0)), 1);
+		color = vec4(compute(dpxl * 0.5 * vec2(rand(pos.x) - 0.5, rand(pos.y) - 0.5)), 1);
 	}
+	else
+		color = vec4(compute(vec2(0)), 1);
 }
+
 
 
 
