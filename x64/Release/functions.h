@@ -336,14 +336,14 @@ inline float distJuliaAlt(vec3 pos, vec4 c)
 	return 0.25 * sqrt(mz2 / md2) * log(mz2);
 }
 
-inline float distJulia(vec3 pos, vec4 c)
+inline float distJulia(vec3 pos)
 {
 	vec4 z = vec4(pos.x, pos.y, pos.z, 0);
 	float md2 = 1;
 	float mz2 = dot(z, z);
-	c = vec4(pos.z, var2.y, 0, 0);
+	vec4 c = vec4(pos.z, var2.y, 0, 0);
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 15; i++)
 	{
 		md2 *= 4.0 * mz2;
 		z = qsqr(z) + c; // z  -> z^2 + c
@@ -383,6 +383,6 @@ inline float distance(vec3 pos)
 	//return distKIFS(pos, var2, vec3(var.x, var.y, var.z), vec3(0), var.w);
 	///return distKIFS(pos, vec3(2, 4.8, 0), vec3(0, 0.43, 0), vec3(0, 0, 0), 1.3);
 	 
-	//return subtract(distJuliaAlt(pos, var), distBox(pos, vec3(10, 10, 3), vec3(0, 0, -(var2.x + 3))));
-	return subtract(distJulia(pos, var), distBox(pos, vec3(10, 10, 3), vec3(0, 0, -(var2.x + 3))));
+	return subtract(distJuliaAlt(pos, var), distBox(pos, vec3(10, 10, 3), vec3(0, 0, -(var2.x + 3))));
+	//return subtract(distJulia(pos), distBox(pos, vec3(10, 10, 3), vec3(0, 0, -(var2.x + 3))));
 }

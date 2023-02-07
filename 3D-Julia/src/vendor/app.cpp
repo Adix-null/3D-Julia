@@ -202,7 +202,7 @@ void captureImage()
     std::string path = "Vaizdai/pic_" + std::to_string(pfnc) + ".png";
     FreeImage_Save(FIF_PNG, image, path.c_str(), 0);
 
-    //// Free resources
+    //w Free resources
     FreeImage_Unload(image);
     free(pixels);
 }
@@ -214,7 +214,7 @@ glm::vec3 camRot = glm::vec3(0, 0, 0);
 float mouseSens = 1.0f;
 int fov = 90;
 glm::vec4 vr = glm::vec4(0, 0, 0, 0);
-glm::vec3 vr2 = glm::vec3(0, 0, 0);
+glm::vec3 vr2 = glm::vec3(-3, -2, 0);
 float speed = 1.0f;
 bool relSpeed = true;
 int steps = 200;
@@ -362,67 +362,72 @@ int main(int argc, char *argv[])
         m.x = (LONG)(SCREEN_WIDTH * 0.5);
         m.y = (LONG)(SCREEN_HEIGHT * 0.5);
 
-        //Sukimasis
-        if (f.x > 0 && f.y > 0 && f.x < SCREEN_WIDTH && f.y < SCREEN_HEIGHT && viewFocus)
+        if (GetActiveWindow() == wind_h)
         {
-            if (f.x - m.x != 0 || f.y - m.y != 0)
+            //Sukimasis
+            if (f.x > 0 && f.y > 0 && f.x < SCREEN_WIDTH && f.y < SCREEN_HEIGHT && viewFocus)
             {
-                if (!focusInit)
+                if (f.x - m.x != 0 || f.y - m.y != 0)
                 {
-                    camRotDif.x = mouseSens * 0.05f * ImGui::GetIO().DeltaTime * ((float)(f.y) - (SCREEN_HEIGHT * 0.5f));
-                    camRotDif.z = mouseSens * 0.05f * ImGui::GetIO().DeltaTime * ((float)(f.x) - (SCREEN_WIDTH * 0.5f));
+                    if (!focusInit)
+                    {
+                        camRotDif.x = mouseSens * 0.05f * ImGui::GetIO().DeltaTime * ((float)(f.y) - (SCREEN_HEIGHT * 0.5f));
+                        camRotDif.z = mouseSens * 0.05f * ImGui::GetIO().DeltaTime * ((float)(f.x) - (SCREEN_WIDTH * 0.5f));
+                    }
+                    else
+                        focusInit = false;
+                    ClientToScreen(wind_h, &m);
+                    SetCursorPos(m.x, m.y);
                 }
-                else
-                    focusInit = false;
-                ClientToScreen(wind_h, &m);
-                SetCursorPos(m.x, m.y);
+                toggleCursor(false);
             }
-            toggleCursor(false);
+            else
+                toggleCursor(true);
+
+            //Judejimas
+            movSpeed = speed * ImGui::GetIO().DeltaTime;
+            if (GetAsyncKeyState(GLFW_KEY_D) < 0)
+                camPosDif.x += movSpeed;
+            if (GetAsyncKeyState(GLFW_KEY_A) < 0)
+                camPosDif.x -= movSpeed;
+            if (GetAsyncKeyState(GLFW_KEY_W) < 0)
+                camPosDif.y += movSpeed;
+            if (GetAsyncKeyState(GLFW_KEY_S) < 0)
+                camPosDif.y -= movSpeed;
+            if (GetAsyncKeyState(GLFW_KEY_E) < 0)
+                camPosDif.z += movSpeed;
+            if (GetAsyncKeyState(GLFW_KEY_Q) < 0)
+                camPosDif.z -= movSpeed;
+
+            //Vartotojo ivesties vertimas i duoemenis seseliuoklei
+            camRot += camRotDif;
+
+            tmpd = max(abs(distance(camPos)), 0.02f);
+            dsp = 1.1f;
+            camPos += vec3(relSpeed ? min(pow(tmpd, dsp), pow(tmpd, 1 / dsp)) : 1) * rotate(camRot, camPosDif);
+
+            camRot.x = fmod(camRot.x, DegToRad(360));
+            camRot.z = fmod(camRot.z, DegToRad(360));
+
+            if (camRot.x > DegToRad(89.9))
+                camRot.x = DegToRad(89.9);
+            if (camRot.x < DegToRad(-89.9))
+                camRot.x = DegToRad(-89.9);
+
+            camRot.y = 0;
         }
-        else
-            toggleCursor(true);
-
-        //Judejimas
-        movSpeed = speed * ImGui::GetIO().DeltaTime;
-        if (GetAsyncKeyState(GLFW_KEY_D) < 0)
-            camPosDif.x += movSpeed;
-        if (GetAsyncKeyState(GLFW_KEY_A) < 0)
-            camPosDif.x -= movSpeed;
-        if (GetAsyncKeyState(GLFW_KEY_W) < 0)
-            camPosDif.y += movSpeed;
-        if (GetAsyncKeyState(GLFW_KEY_S) < 0)
-            camPosDif.y -= movSpeed;
-        if (GetAsyncKeyState(GLFW_KEY_E) < 0)
-            camPosDif.z += movSpeed;
-        if (GetAsyncKeyState(GLFW_KEY_Q) < 0)
-            camPosDif.z -= movSpeed;
-
-        //Vartotojo ivesties vertimas i duoemenis seseliuoklei
-        camRot += camRotDif;
-
-        tmpd = max(abs(distance(camPos)), 0.02f);
-        dsp = 1.1f;
-        camPos += vec3(relSpeed ? min(pow(tmpd, dsp), pow(tmpd, 1 / dsp)) : 1) * rotate(camRot, camPosDif);
-
-        camRot.x = fmod(camRot.x, DegToRad(360));
-        camRot.z = fmod(camRot.z, DegToRad(360));
-
-        if (camRot.x > DegToRad(89.9))
-            camRot.x = DegToRad(89.9);
-        if (camRot.x < DegToRad(-89.9))
-            camRot.x = DegToRad(-89.9);
-
-        camRot.y = 0;
 
         //parametrai promo video
-        /*if (vid && vr.x < 5)
+        if (vid && vr.x < 5)
         {
             float tmd = -2.5f;
-            camPos = vec3(tmd * sin(vr.y), tmd * cos(vr.y), 0);
-            camRot = vec3(0, 0, vr.y);
+            camPos = vec3(tmd * sin(vr.y), tmd * cos(vr.y), 1);
+            camRot = vec3(0.2f, 0, vr.y);
+            vr.x += 0.0075f;  
             vr.y += 0.0075f;
-            vr.x += 0.0075f;            
-        }*/
+            vr2.x += 0.015f;
+            vr2.y += 0.01f;
+        }
 
         //Seseliuoklei perduodami duomenys
         glUniform3f(glGetUniformLocation(shd, "camPos"), camPos.x, camPos.y, camPos.z);
@@ -435,7 +440,7 @@ int main(int argc, char *argv[])
         glUniform1i(glGetUniformLocation(shd, "coloring"), color);
         glUniform1i(glGetUniformLocation(shd, "msaa"), msaa);
         glUniform4f(glGetUniformLocation(shd, "var"), vr.x, vr.y, vr.z, vr.w);
-        glUniform3f(glGetUniformLocation(shd, "var2"), vr2.x, vr2.y, vr2.z);
+        glUniform3f(glGetUniformLocation(shd, "var2"), abs(vr2.x), vr2.y, vr2.z);
         glUniform1f(glGetUniformLocation(shd, "AO"), AO);
         glUniform1f(glGetUniformLocation(shd, "eps"), eps);
         glUniform1f(glGetUniformLocation(shd, "glowMult"), glowThrMult);
@@ -552,6 +557,10 @@ void keyCallBack(GLFWwindow* window, int key, int scancode, int action, int mods
                 case GLFW_KEY_F1:
                 {
                     InfoPopUp();
+                    break;
+                }
+                case GLFW_KEY_T:
+                {
                     break;
                 }
             }
