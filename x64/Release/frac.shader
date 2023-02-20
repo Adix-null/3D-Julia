@@ -124,7 +124,7 @@ vec3 compute(vec2 aaCoord)
 			if (sh != 0)
 			{
 				direct = true;
-				intensity += map(0, 1, AO, 1, sh * max(dot(normal, normalize(lights[i] - dp.xyz)), 0));
+				intensity += map(0, 1, AO * (1 - intensity), 1 - intensity, sh * max(dot(normal, normalize(lights[i] - dp.xyz)), 0));
 			}
 		}
 		//Reaguojama i taska atsizvelgiant ar jis tiesiogiai apsviestas
@@ -171,7 +171,7 @@ float rand(float n)
 void main()
 {
 	lights[0] = vec3(9, 5, 30);
-	//lights[1] = vec3(0, -4, 2);
+	lights[1] = vec3(0, -4, 2);
 	//lights[0] = camPos;
 	//lights[0] = vec3(0);
 
