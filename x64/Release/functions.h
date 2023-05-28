@@ -189,7 +189,7 @@ inline float distMenger(vec3 pos)
 	float d = distBox(pos, vec3(1.0), vec3(0));
 
 	float s = 1.0;
-	for (int m = 0; m < 8; m++)
+	for (int m = 0; m < 24; m++)
 	{
 		vec3 a = mod(pos * vec3(s), vec3(2.0)) - vec3(1.0);
 		s *= 3.0;
@@ -375,13 +375,14 @@ inline float distance(vec3 pos)
 	else
 		return subtract(distBox(pos, o, o), distSphere(pos, 0.5));*/
 	 
-	//return distMenger(pos);
+	return distMenger(pos);
 	//return distSierpinski(pos);
 	
 	//return distMandelbox(pos);
-	return unite(distMandelbulb(pos), distPlane(pos, -2));
+	//return distMandelbulb(pos);
+	//return unite(distMandelbulb(pos), distPlane(pos, -2));
 	//return distKIFS(pos, var2, vec3(var.x, var.y, var.z), vec3(0), var.w);
-	///return distKIFS(pos, vec3(2, 4.8, 0), vec3(0, 0.43, 0), vec3(0, 0, 0), 1.3);
+	//return distKIFS(pos, vec3(2, 4.8, 0), vec3(0, 0.43, 0), vec3(0, 0, 0), 1.3);
 	 
 	//return subtract(distJuliaAlt(pos, var), distBox(pos, vec3(10, 10, 3), vec3(0, 0, -(var2.x + 3))));
 	//return subtract(distJulia(pos), distBox(pos, vec3(10, 10, 3), vec3(0, 0, -(var2.x + 3))));

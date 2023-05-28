@@ -220,11 +220,12 @@ bool relSpeed = true;
 int steps = 200;
 float AO = 0.3f;
 int msaa = 1;
+float prec = 3.0f;
 float softShadow = 10.0f;
 bool glow = false;
 bool color = true;
 float glowThrMult = 30;
-float eps = 5;
+float eps = 6;
 
 bool focusInit = false;
 bool viewFocus = false;
@@ -399,12 +400,27 @@ int main(int argc, char *argv[])
             if (GetAsyncKeyState(GLFW_KEY_Q) < 0)
                 camPosDif.z -= movSpeed;
 
+            //parametrai promo video
+            if (vid && distance(camPos) > 0.00001f)
+            {
+                camPosDif.y += movSpeed / 30.0f;
+                //camPos = 
+                /*float tmd = -2.5f;
+                camPos = vec3(tmd * sin(vr.y), tmd * cos(vr.y), 1);
+                camRot = vec3(0.2f, 0, vr.y);
+                vr.x += 0.0075f;
+                vr.y += 0.0075f;
+                vr2.x += 0.015f;
+                vr2.y += 0.01f;*/
+            }
+
             //Vartotojo ivesties vertimas i duoemenis seseliuoklei
             camRot += camRotDif;
 
-            tmpd = max(abs(distance(camPos)), 0.02f);
-            dsp = 1.1f;
-            camPos += vec3(relSpeed ? min(pow(tmpd, dsp), pow(tmpd, 1 / dsp)) : 1) * rotate(camRot, camPosDif);
+            tmpd = max(abs(distance(camPos)), 0.000000000001f);
+            dsp = 2.0f;
+            //camPos += vec3(relSpeed ? min(pow(tmpd, dsp), pow(tmpd, 1 / dsp)) : 1) * rotate(camRot, camPosDif);
+            camPos += vec3(relSpeed ? min(pow(dsp, tmpd) - 1,1.0f) : 1) * rotate(camRot, camPosDif);
 
             camRot.x = fmod(camRot.x, DegToRad(360));
             camRot.z = fmod(camRot.z, DegToRad(360));
@@ -417,18 +433,10 @@ int main(int argc, char *argv[])
             camRot.y = 0;
         }
 
-        //parametrai promo video
-        if (vid && vr.x < 5)
-        {
-            float tmd = -2.5f;
-            camPos = vec3(tmd * sin(vr.y), tmd * cos(vr.y), 1);
-            camRot = vec3(0.2f, 0, vr.y);
-            vr.x += 0.0075f;  
-            vr.y += 0.0075f;
-            vr2.x += 0.015f;
-            vr2.y += 0.01f;
-        }
+        
 
+        prec = min(0.0001f, distance(camPos)/1000.0f);
+        //prec = 0.0001f;
         //Seseliuoklei perduodami duomenys
         glUniform3f(glGetUniformLocation(shd, "camPos"), camPos.x, camPos.y, camPos.z);
         glUniform3f(glGetUniformLocation(shd, "camRot"), camRot.x, camRot.y, camRot.z);
@@ -439,6 +447,7 @@ int main(int argc, char *argv[])
         glUniform1i(glGetUniformLocation(shd, "glow"), glow);
         glUniform1i(glGetUniformLocation(shd, "coloring"), color);
         glUniform1i(glGetUniformLocation(shd, "msaa"), msaa);
+        glUniform1f(glGetUniformLocation(shd, "prec"), prec);
         glUniform4f(glGetUniformLocation(shd, "var"), vr.x, vr.y, vr.z, vr.w);
         glUniform3f(glGetUniformLocation(shd, "var2"), abs(vr2.x), vr2.y, vr2.z);
         glUniform1f(glGetUniformLocation(shd, "AO"), AO);
@@ -467,11 +476,12 @@ int main(int argc, char *argv[])
         ImGui::Checkbox("Relatyvus greitis", &relSpeed);
         ImGui::SliderInt("Matymo lauko kampas", &fov, 30, 150);
         ImGui::SliderFloat("Peles jautrumas", &mouseSens, 0.1f, 2.0f);
-        ImGui::SliderInt("MSAA lygis", &msaa, 0, 3);
+        //ImGui::SliderFloat("Gilumas", &prec, 1, 8);
         
         ImGui::Text("Kintamieji");
         ImGui::SliderInt("Zingsniu limitas", &steps, 10, 500);
         ImGui::SliderFloat("Epsilon (10^(-E))", &eps, 2, 10);
+        ImGui::SliderInt("MSAA lygis", &msaa, 0, 3);
         ImGui::Text("4D Kintamasis x");
         ImGui::SliderFloat("Xx", &vr.x, -varLimit, varLimit);
         ImGui::SliderFloat("Xy", &vr.y, -varLimit, varLimit);
@@ -482,7 +492,7 @@ int main(int argc, char *argv[])
         ImGui::SliderFloat("Yy", &vr2.y, -varLimit, varLimit);
         ImGui::SliderFloat("Yz", &vr2.z, -varLimit, varLimit);
 
-        ImGui::Text("Atstumas iki objekto: %.2f", distance(camPos));
+        ImGui::Text("Atstumas iki objekto: %.10f", distance(camPos));
         ImGui::Text("Greitis: %.1f", speed);
         ImGui::Text("Pozicija: X: %.10f, Y: %.10f, Z: %.10f", camPos.x, camPos.y, camPos.z);
         ImGui::Text("Pasisukimas: X: %.1f, Y: %.1f, Z: %.1f", RadToDeg(camRot.x), RadToDeg(camRot.y), RadToDeg(camRot.z));

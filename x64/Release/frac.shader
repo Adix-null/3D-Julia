@@ -24,13 +24,13 @@ uniform int stepLimit;
 uniform bool glow;
 uniform bool coloring;
 uniform int msaa;
+uniform float prec;
 uniform float glowMult;
 uniform float AO;
 uniform float eps;
 
 
-float lengthLimit = 0.001;
-float threshold = lengthLimit * glowMult;
+float threshold = prec * glowMult;
 
 float maxDist = 150;
 
@@ -49,7 +49,7 @@ vec4 march(vec3 rayPos, vec3 rayDir)
 	vec3 oldPos = rayPos;
 	vec3 newPos;
 	
-	while (dist < maxDist && dist > lengthLimit && st < stepLimit)
+	while (dist < maxDist && dist > prec && st < stepLimit)
 	{
 		st++;
 		dist = distance(oldPos);
@@ -61,7 +61,7 @@ vec4 march(vec3 rayPos, vec3 rayDir)
 			clp = oldPos;
 		}
 	}
-	if (dist < lengthLimit)
+	if (dist < prec)
 		return vec4(oldPos, st);
 	else
 		return vec4(clp, 0);
@@ -154,7 +154,7 @@ vec3 compute(vec2 aaCoord)
 		vec3 glowColor = vec3(1, 1, 1);
 		if (glowdist < threshold && glow)
 		{
-			float temp = map(lengthLimit, threshold, 1, 0, glowdist);
+			float temp = map(prec, threshold, 1, 0, glowdist);
 			return abs(glowColor - style) * temp + min(glowColor, style);
 		}
 		else
